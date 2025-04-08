@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFID System Simulation</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .card {
+            background: #fff;
+            color: #333;
+            border-radius: 15px;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card.active {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(145deg, #ff6f61, #ff3d3d);
+            color: #fff;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+        .card.active::before {
+            opacity: 1;
+        }
+
+        .card i {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .arrow {
+            position: absolute;
+            width: 30px;
+            height: 2px;
+            background: #fff;
+            opacity: 0.5;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -5px;
+            width: 10px;
+            height: 10px;
+            border-right: 2px solid #fff;
+            border-bottom: 2px solid #fff;
+            transform: rotate(-45deg);
+        }
+
+        .log-box {
+            margin-top: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            width: 100%;
+            max-width: 800px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .status {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .status div {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .status .red { background: #ff3d3d; }
+        .status .green { background: #50c878; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <h1>RFID System Simulation</h1>
+    <div class="container" id="flowchart">
+        <div class="card" id="rfid-tag">
+            <i class="fas fa-wifi"></i>
+            <p>RFID Tag: Signal Emission</p>
+        </div>
+        <div class="card" id="rfid-reader">
+            <i class="fas fa-microchip"></i>
+            <p>RFID Reader / Innovation Chip</p>
+        </div>
+        <div class="card" id="logical-gates">
+            <i class="fas fa-cogs"></i>
+            <p>Logical Gates & Transistors<br>(Signal Processing)</p>
+        </div>
+        <div class="card" id="processor">
+            <i class="fas fa-brain"></i>
+            <p>Processor<br>(Data Analysis)</p>
+        </div>
+        <div class="card" id="ram">
+            <i class="fas fa-memory"></i>
+            <p>RAM Chip<br>(Temporary Storage)</p>
+        </div>
+        <div class="card" id="storage">
+            <i class="fas fa-hdd"></i>
+            <p>Storage Components<br>(Hard Disk / SSD)</p>
+        </div>
+        <div class="card" id="rom">
+            <i class="fas fa-cog"></i>
+            <p>ROM Subsystems<br>(BIOS & CMOS Initialization)</p>
+        </div>
+        <div class="card" id="peripherals">
+            <i class="fas fa-compact-disc"></i>
+            <p>Peripheral Interfaces<br>(CD Drive, Network Card,<br>Sound & VGA Cards)</p>
+        </div>
+        <div class="card" id="connectivity">
+            <i class="fas fa-plug"></i>
+            <p>Connectivity Modules<br>(HDMI, USB, Serial,<br>Parallel Ports)</p>
+        </div>
+        <div class="card" id="network">
+            <i class="fas fa-globe"></i>
+            <p>External Communication<br>(Network Card, External Port)</p>
+        </div>
+    </div>
+
+    <div class="status" id="status">
+        <div id="power-status">Power: Stable</div>
+        <div id="heat-status">Heat: Normal</div>
+        <div id="connectivity-status">Connectivity: Online</div>
+    </div>
+
+    <div class="log-box" id="log-box"></div>
+
+    <script>
+        // Utility function to log messages
+        function logMessage(message, type = 'info') {
+            const logBox = document.getElementById('log-box');
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${new Date().toLocaleTimeString()}] ${type.toUpperCase()}: ${message}`;
+            logEntry.style.color = type === 'error' ? '#ff3d3d' : '#fff';
+            logBox.appendChild(logEntry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // Class to simulate the RFID system
+        class RFIDSystem {
+            constructor() {
+                this.components = [
+                    'rfid-tag', 'rfid-reader', 'logical-gates', 'processor',
+                    'ram', 'storage', 'rom', 'peripherals', 'connectivity', 'network'
+                ];
+                this.powerStable = true;
+                this.heatLevel = 25.0;
+                this.connectivityOnline = true;
+                this.data = { id: 'TAG123', timestamp: new Date().toISOString(), payload: 'Sample Item Data' };
+            }
+
+            async run() {
+                // Initialize system
+                this.updateStatus();
+
+                for (let i = 0; i < 3; i++) {
+                    logMessage(`Starting RFID Operation ${i + 1}`);
+                    try {
+                        // Simulate power stability
+                        this.powerStable = Math.random() > 0.2;
+                        document.getElementById('power-status').textContent = `Power: ${this.powerStable ? 'Stable' : 'Unstable'}`;
+                        document.getElementById('power-status').className = this.powerStable ? 'green' : 'red';
+                        if (!this.powerStable) {
+                            logMessage('Power instability detected!', 'error');
+                            throw new Error('Power supply unstable');
+                        }
+
+                        // Step through each component
+                        for (const component of this.components) {
+                            const card = document.getElementById(component);
+                            card.classList.add('active');
+                            logMessage(`Processing at ${card.querySelector('p').textContent}`);
+
+                            // Simulate heat increase
+                            this.heatLevel += Math.random() * 2;
+                            document.getElementById('heat-status').textContent = `Heat: ${this.heatLevel.toFixed(1)}°C`;
+                            document.getElementById('heat-status').className = this.heatLevel > 70 ? 'red' : 'green';
+                            if (this.heatLevel > 70) {
+                                logMessage('Overheating detected!', 'error');
+                                throw new Error('System overheating');
+                            }
+
+                            // Simulate connectivity for network step
+                            if (component === 'network') {
+                                this.connectivityOnline = Math.random() > 0.3;
+                                document.getElementById('connectivity-status').textContent = `Connectivity: ${this.connectivityOnline ? 'Online' : 'Offline'}`;
+                                document.getElementById('connectivity-status').className = this.connectivityOnline ? 'green' : 'red';
+                                if (!this.connectivityOnline) {
+                                    logMessage('Network connectivity lost!', 'error');
+                                    throw new Error('Connectivity failure');
+                                }
+                            }
+
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            card.classList.remove('active');
+                        }
+
+                        logMessage('RFID Operation completed successfully!');
+                    } catch (error) {
+                        logMessage(`Operation failed: ${error.message}`, 'error');
+                    }
+                    await new Promise(resolve => setTimeout(resolve, 2000));
+                }
+            }
+
+            updateStatus() {
+                document.getElementById('power-status').textContent = `Power: ${this.powerStable ? 'Stable' : 'Unstable'}`;
+                document.getElementById('heat-status').textContent = `Heat: ${this.heatLevel.toFixed(1)}°C`;
+                document.getElementById('connectivity-status').textContent = `Connectivity: ${this.connectivityOnline ? 'Online' : 'Offline'}`;
+            }
+        }
+
+        // Start the simulation
+        const system = new RFIDSystem();
+        system.run();
+    </script>
+</body>
+</html>
